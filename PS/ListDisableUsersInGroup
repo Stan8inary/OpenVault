@@ -1,0 +1,6 @@
+# Replace 'Disabled_User' with the name of the Active Directory group you want to list users from
+Get-ADGroupMember -Identity "Disabled_Users" -Recursive | 
+%{Get-ADUser -Identity $_.distinguishedName -Properties Enabled | 
+?{$_.Enabled -eq $false}} | 
+Select DistinguishedName,Enabled | 
+Export-Csv c:\intel\DisableResult.csv -NoTypeInformation
