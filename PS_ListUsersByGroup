@@ -1,0 +1,9 @@
+# Replace 'DomainUsers' with the name of the Active Directory group you want to list users from
+
+$groupName = "DomainUsers"
+
+# Use Get-ADGroupMember to list users in the group
+
+Get-ADGroupMember -Identity $groupName | 
+Select-Object Name, SamAccountName |
+ export-csv "C:\temp\DomainUsers.csv" -NoTypeInformation
