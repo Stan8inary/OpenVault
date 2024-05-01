@@ -1,4 +1,4 @@
-$complist = Get-Content "C:\temp\cs-inact.txt"
+$complist = Get-Content "C:\temp\PClist.txt"
 
 foreach($comp in $complist){
     
