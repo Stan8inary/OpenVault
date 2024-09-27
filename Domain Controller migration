@@ -1,0 +1,63 @@
+Domain Controller migration from Windows 2008R2/2012 to Windows2012/Windows2019
+
+1.Create new server
+2.Join to domain
+3. log in to the server as Enterprise Administrator
+4. Assign static IP address to the server
+5. Launch the PowerShell Console as an Administrator
+6. Install the AD DS Role in the given server.
+ 
+Install-WindowsFeature –Name AD-Domain-Services -IncludeManagementTools
+
+7. Configure the new server as additional domain controller.
+ 
+Install-ADDSDomainController
+-CreateDnsDelegation:$false
+-NoGlobalCatalog:$true
+-InstallDns:$true
+-DomainName "Contoso.com"
+-SiteName "Default-First-Site-Name"
+-ReplicationSourceDC "MainDC.Contoso.com"
+-DatabasePath "C:\Windows\NTDS"
+-LogPath "C:\Windows\NTDS"
+-NoRebootOnCompletion:$true
+-SysvolPath "C:\Windows\SYSVOL"
+-Force:$true
+
+8. Restart the system and log back in as administrator to check the AD DS status. 
+
+Get-Service adws,kdc,netlogon,dns
+
+Confirm the status of the AD DS service. 
+
+Get-ADDomainController -Filter * |  Format-Table Name, IPv4Address, Site
+
+9. Migrate all five FSMO roles to the New domain controller using following command,
+
+Move-ADDirectoryServerOperationMasterRole -Identity "NewDC" -OperationMasterRole SchemaMaster, DomainNamingMaster, PDCEmulator, RIDMaster, InfrastructureMaster
+
+Verify the new FSMO role holder using 
+
+Netdom query fsmo
+
+10. The new step of the process is to decommission the old windows domain controller.
+
+Uninstall-ADDSDomainController -DemoteOperationMasterRole -RemoveApplicationPartition
+
+11. After DC migration to Win2019, next step is to raise the domain and forest functional level to windows server 2019. To do that can use the following commands.
+
+To upgrade domain functional levels
+
+Set-ADDomainMode –identity Contoso.com -DomainMode Windows2016Domain
+
+To upgrade forest function levels
+
+Set-ADForestMode -Identity Contoso.com -ForestMode Windows2016Forest
+
+12. After the migration completes, we still need to verify if its completes successfully. 
+
+Get-ADDomain | fl Name,DomainMode
+
+This command will show the current Domain functional level of the domain after the migration. 
+
+Get-ADForest | fl Name,ForestMode
